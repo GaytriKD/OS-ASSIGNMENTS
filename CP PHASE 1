@@ -1,0 +1,271 @@
+//job card
+/*$AMJ000130030003
+GD20GD30LR20SR40LR30SR20LR40SR30PD20PD30H
+$DTA
+VIT
+VIIT
+$END*/
+#include <iostream>
+#include <fstream>
+#include <cstring>
+#include <cstdlib>
+
+using namespace std;
+
+// ================= MEMORY =================
+char M[100][4];
+
+// ================= REGISTERS =================
+char IR[4];
+char R[4];
+int IC;
+int C;
+int SI;
+
+// ================= FILES =================
+ifstream fin;
+ofstream fout;
+
+// ================= INITIALIZATION =================
+void INIT()
+{
+    for (int i = 0; i < 100; i++)
+        for (int j = 0; j < 4; j++)
+            M[i][j] = ' ';
+
+    for (int i = 0; i < 4; i++)
+    {
+        IR[i] = ' ';
+        R[i] = ' ';
+    }
+
+    IC = 0;
+    C = 0;
+    SI = 0;
+}
+
+// ================= READ =================
+void READ()
+{
+    string line;
+    getline(fin, line);
+
+    int addr = (IR[2] - '0') * 10 + (IR[3] - '0');
+    int k = 0;
+
+    for (int i = addr; i < addr + 10; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            if (k < (int)line.length() && line[k] != '\n')
+            {
+                M[i][j] = line[k];
+                k++;
+            }
+            else
+                M[i][j] = ' ';
+        }
+    }
+}
+
+// ================= WRITE =================
+void WRITE()
+{
+    int addr = (IR[2] - '0') * 10 + (IR[3] - '0');
+
+    for (int i = addr; i < addr + 10; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            fout << M[i][j];
+        }
+    }
+    fout << "\n";
+}
+
+// ================= MOS =================
+void MOS()
+{
+    if (SI == 1)
+        READ();
+    else if (SI == 2)
+        WRITE();
+    else if (SI == 3)
+        fout << "\n\n";
+}
+
+// ================= EXECUTE =================
+void EXECUTE()
+{
+    while (true)
+    {
+        for (int i = 0; i < 4; i++)
+            IR[i] = M[IC][i];
+
+        IC++;
+
+        int addr = (IR[2] - '0') * 10 + (IR[3] - '0');
+
+        // LR
+        if (IR[0] == 'L' && IR[1] == 'R')
+        {
+            for (int i = 0; i < 4; i++)
+                R[i] = M[addr][i];
+        }
+
+        // SR
+        else if (IR[0] == 'S' && IR[1] == 'R')
+        {
+            for (int i = 0; i < 4; i++)
+                M[addr][i] = R[i];
+        }
+
+        // CR
+        else if (IR[0] == 'C' && IR[1] == 'R')
+        {
+            C = 1;
+            for (int i = 0; i < 4; i++)
+            {
+                if (R[i] != M[addr][i])
+                {
+                    C = 0;
+                    break;
+                }
+            }
+        }
+
+        // BT
+        else if (IR[0] == 'B' && IR[1] == 'T')
+        {
+            if (C == 1)
+                IC = addr;
+        }
+
+        // GD
+        else if (IR[0] == 'G' && IR[1] == 'D')
+        {
+            SI = 1;
+            MOS();
+        }
+
+        // PD
+        else if (IR[0] == 'P' && IR[1] == 'D')
+        {
+            SI = 2;
+            MOS();
+        }
+
+        // H
+        else if (IR[0] == 'H')
+        {
+            SI = 3;
+            MOS();
+            break;
+        }
+
+        else
+        {
+            cout << "Invalid Instruction\n";
+            break;
+        }
+    }
+}
+
+// ================= LOAD =================
+void LOAD()
+{
+    string line;
+    int m = 0;
+
+    while (getline(fin, line))
+    {
+        if (line.length() < 4)
+            continue;
+
+        if (line.substr(0, 4) == "$AMJ")
+        {
+            INIT();
+            m = 0;
+        }
+        else if (line.substr(0, 4) == "$DTA")
+        {
+            IC = 0;
+            EXECUTE();
+        }
+        else if (line.substr(0, 4) == "$END")
+        {
+            continue;
+        }
+        else
+        {
+            int k = 0;
+
+            while (k < (int)line.length() && line[k] != '\n')
+            {
+                // HANDLE H
+                if (line[k] == 'H')
+                {
+                    M[m][0] = 'H';
+                    M[m][1] = ' ';
+                    M[m][2] = ' ';
+                    M[m][3] = ' ';
+                    k++;
+                    m++;
+                }
+                else
+                {
+                    for (int j = 0; j < 4; j++)
+                    {
+                        if (k < (int)line.length())
+                        {
+                            M[m][j] = line[k];
+                            k++;
+                        }
+                        else
+                            M[m][j] = ' ';
+                    }
+                    m++;
+                }
+            }
+        }
+    }
+}
+
+// ================= PRINT MEMORY =================
+void printMemory()
+{
+    cout << "\nMemory Map:\n";
+
+    for (int i = 0; i < 100; i++)
+    {
+        cout << i << " :\t";
+        for (int j = 0; j < 4; j++)
+        {
+            cout << M[i][j] << "\t";
+        }
+        cout << "\n";
+    }
+}
+
+// ================= MAIN =================
+int main()
+{
+    fin.open("input.txt");
+    fout.open("output.txt");
+
+    if (!fin)
+    {
+        cout << "Input file not found\n";
+        return 0;
+    }
+
+    LOAD();
+
+    fin.close();
+    fout.close();
+
+    printMemory();
+
+    cout << "Execution Completed\n";
+    return 0;
+}
