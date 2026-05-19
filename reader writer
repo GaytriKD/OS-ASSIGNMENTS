@@ -1,0 +1,127 @@
+#include <iostream>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
+
+using namespace std;
+
+// Semaphore for writers
+sem_t wrt;
+
+// Mutex for protecting readCount
+pthread_mutex_t mutexLock;
+
+// Number of readers currently reading
+int readCount = 0;
+
+// Reader function
+void* reader(void* arg)
+{
+    int id = *((int*)arg);
+
+    // Lock mutex before changing readCount
+    pthread_mutex_lock(&mutexLock);
+
+    readCount++;
+
+    // If first reader enters, block writers
+    if(readCount == 1)
+    {
+        sem_wait(&wrt);
+    }
+
+    // Unlock mutex
+    pthread_mutex_unlock(&mutexLock);
+
+    // Reading section
+    cout << "Reader " << id << " is reading" << endl;
+
+    sleep(1);
+
+    // Reader leaving
+    pthread_mutex_lock(&mutexLock);
+
+    readCount--;
+
+    // If last reader leaves, allow writers
+    if(readCount == 0)
+    {
+        sem_post(&wrt);
+    }
+
+    pthread_mutex_unlock(&mutexLock);
+
+    return NULL;
+}
+
+// Writer function
+void* writer(void* arg)
+{
+    int id = *((int*)arg);
+
+    // Writer waits for resource
+    sem_wait(&wrt);
+
+    // Writing section
+    cout << "Writer " << id << " is writing" << endl;
+
+    sleep(1);
+
+    // Release resource
+    sem_post(&wrt);
+
+    return NULL;
+}
+
+int main()
+{
+    // Reader threads
+    pthread_t readers[3];
+
+    // Writer threads
+    pthread_t writers[2];
+
+    // Reader IDs
+    int r_id[3] = {1, 2, 3};
+
+    // Writer IDs
+    int w_id[2] = {1, 2};
+
+    // Initialize semaphore
+    sem_init(&wrt, 0, 1);
+
+    // Initialize mutex
+    pthread_mutex_init(&mutexLock, NULL);
+
+    // Create reader threads
+    for(int i = 0; i < 3; i++)
+    {
+        pthread_create(&readers[i], NULL, reader, &r_id[i]);
+    }
+
+    // Create writer threads
+    for(int i = 0; i < 2; i++)
+    {
+        pthread_create(&writers[i], NULL, writer, &w_id[i]);
+    }
+
+    // Wait for readers
+    for(int i = 0; i < 3; i++)
+    {
+        pthread_join(readers[i], NULL);
+    }
+
+    // Wait for writers
+    for(int i = 0; i < 2; i++)
+    {
+        pthread_join(writers[i], NULL);
+    }
+
+    // Destroy semaphore
+    sem_destroy(&wrt);
+
+    // Destroy mutex
+    pthread_mutex_destroy(&mutexLock);
+
+    return 0;
+}
