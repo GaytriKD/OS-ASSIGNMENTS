@@ -1,0 +1,92 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int choice;
+
+    cout<<"1. Paging\n2. Segmentation\nEnter choice: ";
+    cin>>choice;
+//PAGING
+    if (choice == 1) {
+        int p_size, logical_address, n;
+
+        cout<<"\nPAGING\n";
+
+        cout<<"Enter no. of pages: ";
+        cin>>n;
+
+        int p_table[50];
+
+        cout<<"Enter frame no. for each page:\n";
+        for (int i = 0; i < n; i++) {
+            cout<<"Page " << i << "-";
+            cin>>p_table[i];
+        }
+
+        cout<<"Enter page size: ";
+        cin>>p_size;
+
+        cout<<"Enter logical address: ";
+        cin>>logical_address;
+
+        //Logical Address = Page No + Offset
+        int p_no = logical_address / p_size;
+        int offset  = logical_address % p_size;
+
+        if (p_no >= n) {
+            cout<<"Page Fault.. Invalid page number"<<endl;
+        } else {
+            int frame_no = p_table[p_no];
+            int physical_ad = frame_no * p_size + offset;
+
+            cout<<"Page No: " <<p_no<<endl;
+            cout<<"Offset: " <<offset<<endl;
+            cout<<"Frame No: " <<frame_no<<endl;
+            cout<<"Physical Address: " <<physical_ad<<endl;
+        }
+    }
+
+//Segmentation
+    else if (choice == 2) {
+        int n;
+        cout<<"\nSEGMENTATION\n";
+
+        cout<<"Enter number of segments: ";
+        cin>>n;
+
+        int base[50], limit[50];
+
+        for (int i = 0; i < n; i++) {
+            cout<<"Segment " << i <<" Base: ";
+            cin>>base[i];
+            cout<<"Segment " << i <<" Limit: ";
+            cin>>limit[i];
+        }
+
+        int seg_no, offset;
+
+        cout<<"Enter segment number: ";
+        cin>>seg_no;
+
+        cout<<"Enter offset: ";
+        cin>>offset;
+
+        //check offset < limit
+        if (seg_no >= n) {
+            cout<<"Invalid Segment No."<<endl;
+        }
+        else if (offset >= limit[seg_no]) {
+            cout<<"Segmentation Fault.. Offset exceeds limit"<<endl;
+        }
+        else {
+            int physical_ad = base[seg_no] + offset;
+            cout<<"Physical Address: "<<physical_ad<<endl;
+        }
+    }
+
+    else {
+        cout<<"Invalid choice"<<endl;
+    }
+
+    return 0;
+}
