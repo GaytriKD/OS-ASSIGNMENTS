@@ -1,0 +1,188 @@
+#include <iostream>
+using namespace std;
+
+int findHit(int frame[], int frames, int page) {
+    for (int i = 0; i < frames; i++) {
+        if (frame[i] == page)
+            return i;
+    }
+    return -1;
+}
+
+void printFrames(int frame[], int frames) {
+    for (int i = 0; i < frames; i++) {
+        if (frame[i] == -1)
+            cout << "- ";
+        else
+            cout << frame[i] << " ";
+    }
+}
+
+void FIFO(int pages[], int n, int frames) {
+    int frame[50];
+    for (int i = 0; i < frames; i++){
+        frame[i] = -1;
+    }
+        
+    int k = 0, pageFault = 0, pageHit = 0;
+
+    for (int i = 0; i < n; i++) {
+        if (findHit(frame, frames, pages[i]) == -1) {
+            frame[k] = pages[i];
+            k = (k + 1) % frames;
+            pageFault++;
+
+            printFrames(frame,frames);
+            cout<<" : "<<" M \n";
+
+        } else {
+            pageHit++;
+            printFrames(frame,frames);
+            cout<<" : "<<" H \n";
+            
+
+        }
+    }
+
+    cout<<"Page Faults: "<<pageFault<<endl;
+    cout<<"Page Hits: "<<pageHit<<endl;
+}
+
+void OPTIMAL(int pages[], int n, int frames) {
+    int frame[50];
+    for (int i = 0; i < frames; i++)
+        frame[i] = -1;
+
+    int pageFault = 0, pageHit = 0;
+
+    for (int i = 0; i < n; i++) {
+
+        if (findHit(frame, frames, pages[i]) != -1) {
+            pageHit++;
+            printFrames(frame,frames);
+            cout<<" : "<<" H ";
+            continue;
+        }
+
+        int p = -1;
+
+        for (int j = 0; j < frames; j++) {
+            if (frame[j] == -1) {
+                p = j;
+                break;
+            }
+        }
+
+        if (p == -1) {
+            int farthest = i;
+            p = 0;
+
+            for (int j = 0; j < frames; j++) {
+                int k;
+                for (k = i + 1; k < n; k++) {
+                    if (frame[j] == pages[k]) break;
+                }
+
+                if (k > farthest) {
+                    farthest = k;
+                    p = j;
+                }
+            }
+        }
+
+        frame[p] = pages[i];
+        printFrames(frame,frames);
+        cout<<" : "<<" M ";
+        pageFault++;
+    }
+
+    cout << "Page Faults: " << pageFault << endl;
+    cout << "Page Hits: " << pageHit << endl;
+}
+
+void LRU(int pages[], int n, int frames) {
+    int frame[50];
+    for (int i = 0; i < frames; i++)
+        frame[i] = -1;
+
+    int pageFault = 0, pageHit = 0;
+
+    for (int i = 0; i < n; i++) {
+
+        if (findHit(frame, frames, pages[i]) != -1) {
+            pageHit++;
+            printFrames(frame,frames);
+            cout<<" : "<<" H ";
+            continue;
+        }
+
+        int p = -1;
+
+        for (int j = 0; j < frames; j++) {
+            if (frame[j] == -1) {
+                p = j;
+                break;
+            }
+        }
+
+        if (replace == -1) {
+            int min = i;
+            p = 0;
+
+            for (int j = 0; j < frames; j++) {
+                int k;
+                for (k = i - 1; k >= 0; k--) {
+                    if (frame[j] == pages[k]) break;
+                }
+
+                if (k < min) {
+                    min = k;
+                    p = j;
+                }
+            }
+        }
+
+        frame[replace] = pages[i];
+        printFrames(frame,frames);
+        cout<<" : "<<" M ";
+        pageFault++;
+    }
+
+    cout << "Page Faults: "<<pageFault<<endl;
+    cout << "Page Hits: "<<pageHit<<endl;
+}
+
+int main() {
+    int n, frames, choice;
+    int pages[100];
+
+    cout << "Enter no. of pages: ";
+    cin >> n;
+
+    cout << "Enter reference string: ";
+    for (int i = 0; i < n; i++)
+        cin >> pages[i];
+
+    cout << "Enter no. of frames: ";
+    cin >> frames;
+
+    do {
+        cout<<"\n1. FIFO\n2. LRU\n3. OPTIMAL\n4. EXIT\n";
+        cout<<"Enter choice: ";
+        cin>>choice;
+
+        if (choice == 1)
+            FIFO(pages, n, frames);
+        else if (choice == 2)
+            LRU(pages, n, frames);
+        else if (choice == 3)
+            OPTIMAL(pages, n, frames);
+        else if (choice == 4)
+            cout << "Exiting...\n";
+        else
+            cout << "Invalid choice!\n";
+
+    } while (choice != 4);
+
+    return 0;
+}
