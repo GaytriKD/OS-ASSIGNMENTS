@@ -1,0 +1,137 @@
+#include <iostream>
+#include <pthread.h>
+#include <semaphore.h>
+#include <vector>
+#include <unistd.h>
+#include <stdlib.h>
+
+using namespace std;
+
+vector<int> buffer;
+
+int BUFFER_SIZE;
+int in = 0;
+int out = 0;
+int totalItems;
+
+sem_t emptySlots;
+sem_t fullSlots;
+sem_t mutex;
+
+int numProducers;
+int numConsumers;
+
+void* producer(void* arg)
+{
+    int id = *((int*)arg);
+
+    for(int i = 0; i < totalItems; i++)
+    {
+        int item = rand() % 100;
+
+        sem_wait(&emptySlots);
+        sem_wait(&mutex);
+
+        buffer[in] = item;
+
+        cout << "Producer " << id
+             << " produced: " << item << endl;
+
+        in = (in + 1) % BUFFER_SIZE;
+
+        sem_post(&mutex);
+        sem_post(&fullSlots);
+
+        sleep(1);
+    }
+
+    return NULL;
+}
+
+void* consumer(void* arg)
+{
+    int id = *((int*)arg);
+
+    for(int i = 0; i < totalItems; i++)
+    {
+        sem_wait(&fullSlots);
+        sem_wait(&mutex);
+
+        int item = buffer[out];
+
+        cout << "Consumer " << id
+             << " consumed: " << item << endl;
+
+        out = (out + 1) % BUFFER_SIZE;
+
+        sem_post(&mutex);
+        sem_post(&emptySlots);
+
+        sleep(2);
+    }
+
+    return NULL;
+}
+
+int main()
+{
+    cout << "Enter Buffer Size: ";
+    cin >> BUFFER_SIZE;
+
+    cout << "Enter Number of Producers: ";
+    cin >> numProducers;
+
+    cout << "Enter Number of Consumers: ";
+    cin >> numConsumers;
+
+    cout << "Enter Number of Items Each Producer Produces: ";
+    cin >> totalItems;
+
+    buffer.resize(BUFFER_SIZE);
+
+    sem_init(&emptySlots, 0, BUFFER_SIZE);
+    sem_init(&fullSlots, 0, 0);
+    sem_init(&mutex, 0, 1);
+
+    pthread_t producers[numProducers];
+    pthread_t consumers[numConsumers];
+
+    int producerIds[numProducers];
+    int consumerIds[numConsumers];
+
+    for(int i = 0; i < numProducers; i++)
+    {
+        producerIds[i] = i + 1;
+
+        pthread_create(&producers[i],
+                       NULL,
+                       producer,
+                       &producerIds[i]);
+    }
+
+    for(int i = 0; i < numConsumers; i++)
+    {
+        consumerIds[i] = i + 1;
+
+        pthread_create(&consumers[i],
+                       NULL,
+                       consumer,
+                       &consumerIds[i]);
+    }
+
+    for(int i = 0; i < numProducers; i++)
+    {
+        pthread_join(producers[i], NULL);
+    }
+
+    for(int i = 0; i < numConsumers; i++)
+    {
+        pthread_join(consumers[i], NULL);
+    }
+
+    sem_destroy(&emptySlots);
+    sem_destroy(&fullSlots);
+    sem_destroy(&mutex);
+
+    return 0;
+}
