@@ -1,0 +1,145 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int n, m;
+
+    cout << "Enter no. of processes: ";
+    cin >> n;
+    cout << "Enter no. of resources: ";
+    cin >> m;
+
+    int alloc[n][m], max[n][m], need[n][m];
+    int avail[m];
+
+    cout << "Enter Alloc Matrix:" << endl;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            cin >> alloc[i][j];
+        }
+    }
+
+    cout << "Enter Max Matrix:" << endl;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            cin >> max[i][j];
+        }
+    }
+
+    cout << "Enter Avail Resources:" << endl;
+    for (int i = 0; i < m; i++) {
+        cin >> avail[i];
+    }
+
+    // Calculate Need matrix
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            need[i][j] = max[i][j] - alloc[i][j];
+        }
+    }
+
+    cout << "\nProcess    Alloc       Max        Need\n";
+    cout << "-----------------------------------------------\n";
+
+    for (int i = 0; i < n; i++) {
+        cout << "P" << i << "        ";
+
+        for (int j = 0; j < m; j++) {
+            cout << alloc[i][j] << " ";
+        }
+
+        cout << "      ";
+        for (int j = 0; j < m; j++) {
+            cout << max[i][j] << " ";
+        }
+
+        cout << "      ";
+        for (int j = 0; j < m; j++) {
+            cout << need[i][j] << " ";
+        }
+
+        cout << endl;
+    }
+
+    cout << "Available resources: ";
+    for (int j = 0; j < m; j++) {
+        cout << avail[j] << " ";
+    }
+    cout << endl;
+
+    int k = 0;
+    int safe[n];
+    bool finish[n] = {false};
+    int it = 0;
+
+    while (k < n) {
+        bool found = false;
+        it++;
+
+        for (int i = 0; i < n; i++) {
+            if (!finish[i]) {
+                int p=0;
+                for (int j = 0; j < m; j++) {
+                    if (need[i][j] <= avail[j]) {
+                        p++;
+                    } else {
+                        break;
+                    }
+                }
+
+                if (m==p) {
+                    cout << "\nProcess P" << i << " is completed";
+
+                    for (int j = 0; j < m; j++) {
+                        avail[j] += alloc[i][j];
+                    }
+
+                    safe[k] = i;
+                    k++;
+                    finish[i] = true;
+                    found = true;
+                }
+            }
+        }
+
+        if (!found) {
+            cout << "\nSystem is in Unsafe state" << endl;
+            cout<<"\nProcesses that cannot complete - \n";
+            for (int i = 0; i < n; i++)
+            {
+                if(!finish[i]){
+                    cout<<"P"<<i<<" : ";
+                    for (int j = 0; j < m; j++)
+                    {
+                        cout<<need[i][j]<<" ";
+                    }
+                    
+                }
+            }
+
+                cout<<"\n Available resources at that time : \n";
+                for (int j = 0; j < m; j++)
+                {
+                    cout<<avail[j]<<" ";
+                }
+                cout<<endl;
+                
+            
+            return 0;
+        }
+    }
+
+    cout << endl;
+
+    if (k == n) {
+        cout << "\nSystem is in Safe state" << endl;
+    }
+
+    for (int i = 0; i < n; i++) {
+        cout << "P" << safe[i] << " ";
+    }
+    cout<<endl
+    cout << "total iterations: " << it << endl;
+
+    return 0;
+}
