@@ -1,0 +1,64 @@
+#!/bin/bash
+
+echo "Enter number of elements:"
+read n
+
+echo "Enter array elements:"
+for ((i=0; i<n; i++))
+do
+    read arr[$i]
+done
+
+# Sorting array in ascending order
+for ((i=0; i<n; i++))
+do
+    for ((j=i+1; j<n; j++))
+    do
+        if [ ${arr[$i]} -gt ${arr[$j]} ]
+        then
+            temp=${arr[$i]}
+            arr[$i]=${arr[$j]}
+            arr[$j]=$temp
+        fi
+    done
+done
+
+echo "Sorted Array:"
+echo "${arr[@]}"
+
+# Checking prime numbers
+echo "Prime Check:"
+for num in "${arr[@]}"
+do
+    flag=1
+
+    if [ $num -le 1 ]
+    then
+        flag=0
+    else
+        for ((i=2; i<=num/2; i++))
+        do
+            if [ $((num % i)) -eq 0 ]
+            then
+                flag=0
+                break
+            fi
+        done
+    fi
+
+    if [ $flag -eq 1 ]
+    then
+        echo "$num is Prime"
+    else
+        echo "$num is Not Prime"
+    fi
+done
+
+# Reversing sorted array
+echo "Reversed Sorted Array:"
+for ((i=n-1; i>=0; i--))
+do
+    echo -n "${arr[$i]} "
+done
+
+echo
